@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <!-- Font Awesome CDN -->
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #202224;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            padding-top: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            transform: translateX(-250px);
+        }
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        .logo {
+            text-align: center;
+            padding: 15px;
+        }
+        .logo img {
+            max-width: 80%;
+        }
+        .links {
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
+        }
+        .link {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            text-align: left;
+            color: #aaa;
+            text-decoration: none;
+            border-bottom: 1px solid #444;
+            transition: background-color 0.3s ease;
+        }
+        .link.active {
+            color: #ffff;
+            background-color: #979797;
+        }
+        .link i {
+            margin-right: 10px;
+        }
+        .content {
+            margin-left: 250px; /* Adjusts content area to account for sidebar */
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto; /* Makes content scrollable if necessary */
+        }
+        .cards-container {
+            display: flex;
+            gap: 20px; /* Space between the cards */
+            flex-wrap: wrap; /* Allows cards to wrap */
+            align-items: stretch; /* Ensures equal height for both cards */
+        }
+        .card, .trend-card, .combined-card {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .card, .trend-card {
+            flex: 1; /* Allow cards to grow equally */
+        }
+        .card {
+            max-width: 400px; /* Width for the automation card */
+        }
+        .trend-card {
+            max-width: 600px; /* Greater width for the trend card */
+        }
+        .combined-card {
+            width: calc(400px + 600px + 20px); /* Combined width of automation and trend cards plus gap */
+            max-width: 100%; /* Ensure it doesn't overflow the container */
+            position: relative; /* To position the legend */
+        }
+        .report-header h2 {
+            margin: 0;
+            font-size: 20px; /* Reduced font size */
+        }
+        .report-header p {
+            margin: 5px 0;
+            color: #999;
+            font-size: 14px; /* Reduced font size */
+        }
+        .report-header h3 {
+            color: #666;
+            font-size: 18px; /* Reduced font size */
+        }
+        .test-cases-number {
+            font-size: 28px; /* Reduced font size */
+            color: #4880ff;
+            text-align: end;
+        }
+        .report-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px; /* Reduced margin */
+        }
+        .report-footer {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 10px; /* Reduced margin */
+        }
+        .result {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 14px; /* Adjusted font size */
+        }
+        .result.passed p {
+            color: #2ecc71;
+        }
+        .result.failed p {
+            color: #e74c3c;
+        }
+        .trend-card h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+        .trend-card canvas {
+            width: 100%;
+            height: 200px; /* Adjust height for the trend chart */
+        }
+        .combined-card-content {
+            display: flex;
+            gap: 20px; /* Space between the inner cards */
+            flex-direction: column;
+            height: 100%;
+        }
+        .combined-card h2 {
+            margin: 0;
+            font-size: 20px; /* Font size for the title */
+        }
+        .chart-container {
+            flex: 1;
+        }
+        .legend-container {
+            display: flex;
+            flex-direction: column;
+            margin-top: 10px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 250px;
+                height: 100%;
+                position: fixed;
+                top: 0;
+                left: 0;
+                z-index: 1000;
+                transition: transform 0.3s ease;
+            }
+            .content {
+                margin-left: 0;
+                margin-top: 60px; /* Adjusted to accommodate the topbar */
+            }
+            .topbar {
+                background-color: #333;
+                color: #fff;
+                padding: 10px;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                z-index: 1000;
+            }
+            .menu-toggle {
+                font-size: 24px;
+                cursor: pointer;
+                display: block;
+            }
+            .topbar .logo img {
+                max-width: 20%;
+            }
+            .sidebar .logo img {
+                display: none;
+            }
+        }
+        @media (min-width: 769px) {
+            .topbar {
+                display: none;
+            }
+            .sidebar {
+                transform: translateX(0);
+            }
+            .content {
+                margin-left: 250px; /* Adjusts content area to account for sidebar */
+                margin-top: 50px; /* No top margin needed on larger screens */
+            }
+        }
+        @media (max-width: 480px) {
+            .card, .trend-card, .combined-card {
+                padding: 10px;
+                width: 100%;
+                max-width: 100%;
+            }
+            .test-cases-number {
+                font-size: 24px; /* Reduced font size */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            <img src="/img/vTech lcompany_logo white 1 1.png" alt="Logo"> <!-- Replace with your logo -->
+        </div>
+        <div class="links">
+            <a href="#" class="link active"><i class="fas fa-home"></i> Dashboard</a> <!-- Changed to home icon -->
+            <a href="#" class="link"><i class="fas fa-cogs"></i> Suites</a>
+            <a href="#" class="link"><i class="fas fa-list"></i> Test Martics</a>
+            <a href="#" class="link"><i class="fas fa-camera"></i> Screenshot</a> <!-- Changed to camera icon -->
+            <!-- Add more links with icons as needed -->
+        </div>
+    </div>
+    <div class="content">
+        <div class="topbar">
+            <span class="menu-toggle" onclick="toggleMenu()">&#9776;</span>
+            <div class="logo">
+                <img src="/img/vTech lcompany_logo white 1 1.png" alt="Logo"> <!-- Replace with your logo -->
+            </div>
+        </div>
+        <!-- Main content goes here -->
+        <div class="cards-container">
+            <div class="card">
+                <div class="report-header">
+                    <h2>Automation Report</h2>
+                    <p>December 03, 2023</p>
+                    <div class="test-cases-container">
+                        <h3>TEST CASES </h3>
+                        <h4 class="test-cases-number">293</h4>
+                    </div>
+                </div>
+                <div class="report-body">
+                    <canvas id="doughnutChart"></canvas>
+                    <div class="report-footer">
+                        <div class="result passed">
+                            <p>Passed</p>
+                            <span>59</span>
+                        </div>
+                        <div class="result failed">
+                            <p>Failed</p>
+                            <span>234</span>
+                        </div>
+                    </div>
+                    <div class="time-taken">
+                        <i class="fa fa-clock-o"></i>
+                        <span>Time taken 00:53:46 Hrs</span>
+                    </div>
+                </div>
+            </div>
+            <div class="trend-card">
+                <h2>Trends</h2>
+                <canvas id="trendChart"></canvas>
+                <!-- Add additional content for the trends card as needed -->
+            </div>
+            <div class="combined-card">
+                <h2>Test Suites: 10</h2> <!-- Updated title -->
+                <div class="combined-card-content">
+                    <div class="chart-container">
+                        <canvas id="testChart"></canvas>
+                    </div>
+                    <!-- Custom legend container -->
+                    <div class="legend-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function toggleMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        const ctx = document.getElementById('testChart').getContext('2d');
+        const data = {
+            labels: Array.from({ length: 10 }, (_, i) => `Test ${i + 1}`),
+            datasets: [
+                {
+                    label: 'Pass',
+                    data: [100, 200, 150, 300, 250, 350, 400, 150, 200, 300],
+                    backgroundColor: 'rgba(0, 255, 0, 0.6)', // Green for pass
+                    borderColor: 'rgba(0, 255, 0, 1)',
+                    borderWidth: 1,
+                    barThickness: 20,
+                    categoryPercentage: 0.8, // Add some gap between groups
+                    barPercentage: 1.0
+                },
+                {
+                    label: 'Fail',
+                    data: [50, 100, 75, 150, 125, 175, 200, 75, 100, 150],
+                    backgroundColor: 'rgba(255, 0, 0, 0.6)', // Red for fail
+                    borderColor: 'rgba(255, 0, 0, 1)',
+                    borderWidth: 1,
+                    barThickness: 20,
+                    categoryPercentage: 0.8, // Add some gap between groups
+                    barPercentage: 1.0
+                }
+            ]
+        };
+
+        const config = {
+            type: 'bar',
+            data: data,
+            options: {
+                plugins: {
+                    title: {
+                        display: true,
+                       
+                        font: {
+                            size: 18
+                        },
+                        padding: {
+                            bottom: 20
+                        },
+                        position: 'left' // Title on the left side
+                    },
+                    legend: {
+                        display: false // Hide default legend
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: false,
+                        title: {
+                            display: true,
+                            text: 'Test Case'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        stacked: false,
+                        title: {
+                            display: true,
+                            text: 'Count'
+                        },
+                        beginAtZero: true,
+                        max: 500
+                    }
+                }
+            }
+        };
+
+        const testChart = new Chart(ctx, config);
+
+        // Create the custom legend
+        const legendContainer = document.querySelector('.legend-container');
+        const legendItems = [
+            { color: 'rgba(0, 255, 0, 0.6)', label: 'Pass' },
+            { color: 'rgba(255, 0, 0, 0.6)', label: 'Fail' }
+        ];
+
+        legendItems.forEach(item => {
+            const legendItem = document.createElement('div');
+            legendItem.classList.add('legend-item');
+            
+            const colorCircle = document.createElement('div');
+            colorCircle.classList.add('legend-color');
+            colorCircle.style.backgroundColor = item.color;
+            
+            const label = document.createElement('span');
+            label.textContent = item.label;
+            
+            legendItem.appendChild(colorCircle);
+            legendItem.appendChild(label);
+            legendContainer.appendChild(legendItem);
+        });
+    </script>
+</body>
+</html>
